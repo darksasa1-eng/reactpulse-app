@@ -1,0 +1,68 @@
+# Render blueprint for ReactPulse v2
+# Docs: https://render.com/docs/blueprint-spec
+#
+# Deploy: Render dashboard -> New + -> Blueprint -> pick this repo -> Apply
+# Custom domain: reactpulse.sasatech.online (Cloudflare DNS -> CNAME, DNS only)
+services:
+  - type: web
+    name: sasa-dev-wa-reacts-web
+    runtime: node
+    plan: free
+    region: singapore
+    branch: main
+    autoDeploy: true
+
+    # vite build -> prerender every route to static HTML -> node server
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/ping
+    domains:
+      - reactpulse.sasatech.online
+
+    envVars:
+      - key: NODE_VERSION
+        value: 20.11.1
+
+      # reaction engine (required)
+      - key: SASA_API_KEY
+        sync: false            # paste your Sasa_Dev_Api_* key in the dashboard
+      - key: SASA_API_BASE
+        value: https://sasa-dev-api.xyz
+      - key: SASA_REACTS_PATH
+        value: /api/wa-channel-reacts
+
+      # canonical domain + SEO
+      - key: CANONICAL_HOST
+        value: reactpulse.sasatech.online
+
+      # admin control room
+      - key: ADMIN_PATH
+        value: /sasa-admin-society
+      - key: ADMIN_EMAIL
+        sync: false            # your admin login email
+      - key: ADMIN_PASSWORD
+        sync: false            # a strong password (no default in the code)
+
+      # JSON database persistence (mirrors database/*.json into a private repo)
+      - key: GITHUB_REPO
+        value: darksasa1-eng/reactpulse-database
+      - key: GITHUB_BRANCH
+        value: main
+      - key: GITHUB_TOKEN
+        sync: false            # fine-grained token with Contents: Read and write
+
+      # anti-sleep keepalive
+      - key: KEEPALIVE
+        value: "1"
+      - key: KEEPALIVE_INTERVAL_MS
+        value: "600000"
+
+      # scraper guard
+      - key: BOT_GUARD
+        value: "1"
+
+      # limits
+      - key: RATE_LIMIT_PER_MINUTE
+        value: "30"
+      - key: MAX_EMOJIS
+        value: "6"

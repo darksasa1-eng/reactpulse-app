@@ -1,0 +1,71 @@
+# ---------------------------------------------------------------------------
+# ReactPulse anti-sleep watchdog
+# ---------------------------------------------------------------------------
+# Render's free plan parks a service after ~15 idle minutes. This workflow
+# pings /api/keepalive every 10 minutes, which resets that timer, so visitors
+# never wait for a cold start. The endpoint also returns the watchdog status so
+# the run log doubles as an uptime record.
+#
+# Manual run: Actions -> keepalive -> Run workflow
+# ---------------------------------------------------------------------------
+name: keepalive
+
+on:
+  schedule:
+    # every 10 minutes (GitHub may delay schedules a few minutes under load)
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: keepalive
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    name: ping production
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Warm the service and read its state
+        env:
+          PRIMARY: https://reactpulse.sasatech.online
+          FALLBACK: https://sasa-dev-wa-reacts-web.onrender.com
+        run: |
+          set -u
+          UA="ReactPulse-KeepAlive/1.0 (+https://reactpulse.sasatech.online; github-actions)"
+          hit() {
+            curl -sS --location --max-time 45 --retry 2 --retry-delay 5 --retry-all-errors \
+              -A "$UA" -H 'Accept: application/json' "$1/api/keepalive?from=github-actions"
+          }
+          echo "::group::primary $PRIMARY"
+          if body=$(hit "$PRIMARY"); then
+            echo "$body" | head -c 800
+            echo
+            echo "woke $PRIMARY"
+            echo "::endgroup::"
+            exit 0
+          fi
+          echo "primary failed, falling back"
+          echo "::endgroup::"
+
+          echo "::group::fallback $FALLBACK"
+          if body=$(hit "$FALLBACK"); then
+            echo "$body" | head -c 800
+            echo
+            echo "::warning::custom domain did not answer, used the onrender host"
+            echo "::endgroup::"
+            exit 0
+          fi
+          echo "::endgroup::"
+          echo "::error::both keepalive targets failed"
+          exit 1
+
+      - name: Wake the HTML entry point as well
+        run: |
+          UA="Mozilla/5.0 (compatible; ReactPulse-KeepAlive/1.0; +https://reactpulse.sasatech.online)"
+          curl -sS --location --max-time 30 -o /dev/null -w "home page: %{http_code} in %{time_total}s\n" \
+            -A "$UA" -H 'Accept: text/html' -H 'Accept-Language: en' \
+            https://reactpulse.sasatech.online/ || true

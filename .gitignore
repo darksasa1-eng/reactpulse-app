@@ -1,0 +1,59 @@
+# dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# build output
+dist/
+build/
+
+# environment
+.env
+.env.local
+.env.*.local
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+*.log
+
+# editors / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# database - the JSON files are the runtime data. They are mirrored to the
+# private repo (darksasa1-eng/reactpulse-database) and restored from it on boot,
+# so the app repository never needs them.
+/database/
+
+# ---------------------------------------------------------------------------
+# THE SOURCE VAULT
+# The application source is published only in encrypted form (`*.enc`): the
+# readable files below are what the build decrypts back into place, so they are
+# never committed. Directories stay walkable so the .enc files are tracked.
+#
+#   edit  ->  SOURCE_KEY=<key> node tools/encrypt-sources.mjs  ->  git add -A
+# ---------------------------------------------------------------------------
+/src/**/*.js
+/src/**/*.jsx
+/src/**/*.css
+/server/**/*.js
+/scripts/**/*.js
+/scripts/**/*.jsx
+/index.html
+/vite.config.js
+
+# the key itself must never be committed
+.source-key
+*.key
+
+# misc
+.cache/
+coverage/
+.tmp/

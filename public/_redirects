@@ -1,0 +1,3 @@
+# Aliases for the channel blocking page (kept, but never indexed)
+/block      /block-channel  301
+/channels   /block-channel  301

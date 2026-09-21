@@ -1,0 +1,26 @@
+{
+  "name": "ReactPulse - WhatsApp Channel reaction booster",
+  "short_name": "ReactPulse",
+  "description": "Add up to 6 emoji reactions to any WhatsApp Channel post in seconds. Free, no sign-up.",
+  "id": "/",
+  "start_url": "/?utm_source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#04070f",
+  "theme_color": "#04070f",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["social", "productivity", "utilities"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ],
+  "shortcuts": [
+    { "name": "Boost reactions", "url": "/boost" },
+    { "name": "Block a channel", "url": "/block-channel" },
+    { "name": "How it works", "url": "/how-it-works" }
+  ]
+}
