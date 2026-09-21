@@ -12,7 +12,7 @@
 
 import { readFileSync, writeFileSync, readdirSync, statSync, rmSync, existsSync } from 'node:fs'
 import path from 'node:path'
-import { encryptBuffer, VAULT_TARGETS } from './crypto.mjs'
+import { encryptBuffer, decryptBuffer, VAULT_TARGETS } from './crypto.mjs'
 
 const ROOT = path.resolve(import.meta.dirname, '..')
 const secret = process.env.SOURCE_KEY
@@ -36,39 +36,60 @@ function walk(target) {
   return out
 }
 
-let files = 0
+let encrypted = 0
+let skipped = 0
 let bytes = 0
 
-function targets() {
+function readableFiles() {
   const found = []
   for (const target of VAULT_TARGETS) {
     const abs = path.join(ROOT, target)
-    if (existsSync(abs) && statSync(abs).isFile()) {
-      found.push(abs)
-      continue
-    }
-    if (existsSync(abs)) found.push(...walk(target))
-    else {
-      const enc = `${abs}.enc`
-      if (existsSync(enc)) found.push(enc) /* nothing to do - already encrypted only */
-    }
+    if (existsSync(abs) && statSync(abs).isFile()) found.push(abs)
+    else if (existsSync(abs)) found.push(...walk(target))
   }
-  return found
+  return found.filter((file) => !file.endsWith('.enc'))
 }
 
+for (const file of readableFiles()) {
+  const plain = readFileSync(file)
+  const out = `${file}.enc`
+
+  /* unchanged since the last run? keep the existing blob so the diff stays small */
+  if (existsSync(out)) {
+    try {
+      if (decryptBuffer(readFileSync(out), secret).equals(plain)) {
+        skipped += 1
+        if (remove) rmSync(file)
+        continue
+      }
+    } catch {
+      /* wrong key or a tampered blob - fall through and rewrite it */
+    }
+  }
+
+  writeFileSync(out, encryptBuffer(plain, secret))
+  bytes += plain.length
+  encrypted += 1
+  if (remove) rmSync(file)
+}
+
+/* a source file that was deleted must not survive as an encrypted page */
+const orphans = []
 for (const target of VAULT_TARGETS) {
-  for (const file of targets()) {
-    if (file.endsWith('.enc')) continue
-    if (!file.startsWith(path.join(ROOT, target))) continue
-    const plain = readFileSync(file)
-    const blob = encryptBuffer(plain, secret)
-    const out = `${file}.enc`
-    writeFileSync(out, blob)
-    bytes += plain.length
-    files += 1
-    if (remove) rmSync(file)
+  const abs = path.join(ROOT, target)
+  if (!existsSync(abs) || !statSync(abs).isDirectory()) continue
+  for (const file of walk(target).filter((f) => f.endsWith('.enc'))) {
+    if (!existsSync(file.replace(/\.enc$/, ''))) orphans.push(file)
   }
 }
+for (const file of orphans) {
+  rmSync(file)
+  console.log('removed orphaned ' + path.relative(ROOT, file) + ' (its source is gone)')
+}
 
-console.log(`${files} file(s) encrypted (${(bytes / 1024).toFixed(1)} KB of source)`)
+console.log(
+  encrypted + ' file(s) encrypted (' + (bytes / 1024).toFixed(1) + ' KB of source)' +
+    (skipped ? ', ' + skipped + ' unchanged' : '') +
+    (orphans.length ? ', ' + orphans.length + ' orphan(s) removed' : '')
+)
 console.log('now: git add -A && git commit -m "chore(vault): re-encrypt source"')

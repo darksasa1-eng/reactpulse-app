@@ -1,7 +1,7 @@
 {
   "name": "reactpulse",
   "private": true,
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "ReactPulse - Boost reactions on any WhatsApp Channel post, with channel blocking, owner verification and an admin control room. Powered by Sasa Dev API.",
   "author": "Sasa Dev",
   "license": "MIT",

@@ -53,6 +53,9 @@ Thumbs.db
 .source-key
 *.key
 
+# local QA screenshots
+.qa-shots/
+
 # misc
 .cache/
 coverage/
