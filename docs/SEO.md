@@ -35,7 +35,7 @@ canonical always points at **https://reactpulse.sasatech.online**.
 `CANONICAL_HOST` (default `reactpulse.sasatech.online`) drives a 301 for any
 other host:
 
-* `https://sasa-dev-wa-reacts-web.onrender.com/*` -> `https://reactpulse.sasatech.online/*`
+* `https://sasa-dev-wa-reacts-web.onrender.com/*` -> `https://reactpulse.sasatech.online/*` (canonical host, enabled by CANONICAL_HOST)
 * `http://reactpulse.sasatech.online/*` -> https
 * `www.reactpulse.sasatech.online/*` -> the apex custom domain
 

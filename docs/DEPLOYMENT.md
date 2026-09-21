@@ -3,11 +3,11 @@
 **සිංහල පියවරෙන් පියවර guide එක.** v2 (2026-09-21) අනුව යාවත්කාලීන කරලා.
 
 ```
-GitHub repo  : darksasa1-eng/sasa-dev-wa-reacts-web   (code, public)
+GitHub repo  : darksasa1-eng/reactpulse-app   (code, public, source stored encrypted)
 Data repo    : darksasa1-eng/reactpulse-database      (JSON database, PRIVATE)
 Live site    : https://reactpulse.sasatech.online
 Admin panel  : https://reactpulse.sasatech.online/sasa-admin-society
-Render       : sasa-dev-wa-reacts-web (Singapore · free plan)
+Render       : sasa-dev-wa-reacts-web (Singapore · free plan) - builds branch main of darksasa1-eng/reactpulse-app
 ```
 
 > ### 🟢 දැනටම deploy කරලා ඉවරයි
@@ -68,8 +68,9 @@ curl -I  https://sasa-dev-wa-reacts-web.onrender.com/        # 301 -> custom dom
 ## 1. GitHub repo එකට code එක දාන්න
 
 ```bash
-git clone https://github.com/darksasa1-eng/sasa-dev-wa-reacts-web.git
-cd sasa-dev-wa-reacts-web
+git clone https://github.com/darksasa1-eng/reactpulse-app.git
+cd reactpulse-app
+# the source is encrypted: build with SOURCE_KEY=<key> npm run build
 cp .env.example .env      # .env එකට SASA_API_KEY එක දාන්න (commit කරන්න එපා!)
 npm install && npm run build && npm start      # http://localhost:3000
 ```
@@ -189,3 +190,26 @@ npm start                  # http://localhost:3000
 Test කරන්න `WA_DEMO=1` දාන්න — phone එකක් pair නොකර channel data + block flow එක
 සම්පූර්ණයෙන් test කරන්න පුළුවන්. Local එකේදී host redirect එක අවශ්‍ය නැහැ
 (`DISABLE_HOST_REDIRECT=1` දාන්නත් පුළුවන්).
+
+## Repository move (2026-09-21)
+
+The site now builds from **darksasa1-eng/reactpulse-app**, a fresh repository
+with a single commit: the application source lives there only as encrypted
+`.enc` files, so no readable copy exists in any commit. The Render service
+`srv-dao3d68473hc73b9jg4g` points at it (`main`, auto-deploy on).
+
+The previous repository `sasa-dev-wa-reacts-web` (which still carried the
+readable v2.1.0 history) is **private and archived** - it is no longer part of
+the deploy path, and nothing else reads from it. The JSON data lives in the
+private mirror repository `darksasa1-eng/reactpulse-database`, which the server
+syncs through the GitHub API with `GITHUB_TOKEN`.
+
+Deploying therefore looks like:
+
+```
+push to reactpulse-app/main
+  -> Render clones the repository
+  -> npm install && npm run build        (prebuild decrypts with SOURCE_KEY)
+  -> npm start                            (prestart decrypts as well)
+  -> https://reactpulse.sasatech.online
+```
