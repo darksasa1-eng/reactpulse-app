@@ -26,18 +26,39 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # The source is stored encrypted (.enc); the build decrypts it with
+      # SOURCE_KEY. Without the repository secret the build steps are skipped
+      # with a notice instead of failing on an unreadable tree.
+      - name: Decrypt the source vault
+        id: vault
+        env:
+          SOURCE_KEY: ${{ secrets.SOURCE_KEY }}
+        run: |
+          if [ -z "$SOURCE_KEY" ]; then
+            echo "::notice::SOURCE_KEY secret is not set - skipping the build steps."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            npm run vault:decrypt
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build the frontend
+        if: steps.vault.outputs.ready == 'true'
+        env:
+          SOURCE_KEY: ${{ secrets.SOURCE_KEY }}   # prebuild decrypts the vault again
         run: npm run build
 
       - name: Render every route (smoke test)
+        if: steps.vault.outputs.ready == 'true'
         run: npm run check:routes
 
       - name: Server syntax check
+        if: steps.vault.outputs.ready == 'true'
         run: node --check server/index.js
 
       - name: Guard - no API key committed
         run: |
-          if grep -rIn --exclude-dir=node_modules --exclude-dir=.git "Sasa_Dev_Api_[A-Za-z0-9]\{20,\}" . ; then
+          if grep -rIn --exclude-dir=node_modules --exclude-dir=.git --exclude="*.enc" "Sasa_Dev_Api_[A-Za-z0-9]\{20,\}" . ; then
             echo "::error::An API key appears to be committed. Remove it and use environment variables instead."
             exit 1
           fi
